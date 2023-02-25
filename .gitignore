@@ -3,3 +3,4 @@
 **/*.pyc
 /static/
 /db.sqlite3
+/signup/static/*
