@@ -1,0 +1,12 @@
+
+[
+        {% for concert in concerts %}
+        {
+            "title": "{{concert.concert.location}}",
+            "id": "{{concert.concert.id}}",
+            {% if request.user %}"url": "{% url 'concertpage' concert_id=concert.concert.id%}"{%endif%},
+            "end": "{{concert.end|date:'c'}}",
+            "start": "{{concert.concert.dateandtime|date:'c'}}"
+        }{% if not forloop.last %},{%endif%}
+        {%endfor%}
+]

@@ -1,0 +1,5 @@
+**/migrations
+**/__pycache__/**
+**/*.pyc
+/static/
+/db.sqlite3

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Signup - Project Melody HUB</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+        <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler-flags.min.css">
+        <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/imask"></script>
+    </head>
+
+    <body>
+        <main class="d-flex flex-column">
+            {% include 'messages.html' %}
+            <div class="page page-center">
+                <div class="container container-tight py-4">
+                    <div class="text-center mb-4">
+                        <h1>Project Melody HUB</h1>
+                    </div>
+                    <form class="card card-md needs-validation" id="signupform" novalidate method="POST" action="{% url 'signup' %}">
+                        {%csrf_token%}
+                        <div class="card-body">
+                            <h2 class="card-title text-center mb-4">Signup for the Project Melody HUB</h2>
+                            <div class="mb-3 row">
+                                <label class="form-label">Your Name (required)</label>
+                                <div class="col">
+                                    <div class="form-floating">
+                                        <input type="text" id="firstname" name="first_name" class="form-control"
+                                            placeholder="First Name" required novalidate value="{{first_name}}">
+                                        <label for="firstname">First name</label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-floating">
+                                        <input type="text" id="lastname" name="last_name" class="form-control"
+                                            placeholder="Last Name" required novalidate value="{{last_name}}">
+                                        <label for="lastname">Last Name</label>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback" id="firstvalidate">Please fill out your first AND last names.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="username">Username</label>
+                                <div class="input-group has-validation">
+                                    <span class="input-group-text" id="inputGroupPrepend">@</span>
+                                    <input type="text" name="username" class="form-control {% if uniqueerror %}is-invalid{%endif%}" id="username" aria-describedby="inputGroupPrepend" required novalidate value="{{username}}">
+                                    <div class="invalid-feedback" id="uservalidate" {% if uniqueerror %} style="display: none;" {%endif%}>
+                                      Please choose a username.
+                                    </div>
+                                    {% if uniqueerror %}<div class="invalid-feedback">Username must be unique. </div>{%endif%}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="email">Email address</label>
+                                <input type="email" id="email" class="form-control" placeholder="Your Email Address" required name="email" value="{{email}}">
+                                <div class="invalid-feedback" id="emailvalidate">
+                                    Please fill out your email address.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="pswd">Password</label>
+                                <input type="password" id="pswd" class="form-control" id="password" placeholder="Password" required value="{{password}}" name="password">
+                                <div class="invalid-feedback">
+                                    <div id="nopass">Please enter a password.</div>
+                                    <div id="passlen">Your password must be at least 8 characters long.</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="confirm">Password (again)</label>
+                                <input type="password" id="confirm" class="form-control" id="confirm" value="{{confirm}}" placeholder="Confirm Password" required name="confirm">
+                                <div class="invalid-feedback">
+                                    <div id="nocon">Please confirm your password.</div>
+                                    <div id="nomatch">Passwords must match</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <input type="submit" class="btn btn-primary" id="submit" value="Register for PM HUB" onclick="validate(event);">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <script>
+                function validate(e) {
+                    invalid = false;
+                    // check first and last name
+                    firstname = $("#firstname").val();
+                    lastname = $("#lastname").val();
+                    if (firstname == "") {
+                        $("#firstname").addClass("is-invalid")
+                        $("#firstvalidate").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#firstname").removeClass("is-invalid")
+                        $("#firstname").addClass("is-valid")
+                        $("#firstvalidate").hide();
+                    }
+                    if (lastname == "") {
+                        $("#lastname").addClass("is-invalid")
+                        $("#firstvalidate").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#lastname").removeClass("is-invalid")
+                        $("#lastname").addClass("is-valid")
+                        $("#firstvalidate").hide();
+                    }
+                    // check username
+                    username = $("#username").val();
+                    if (username == "") {
+                        $("#username").addClass("is-invalid")
+                        $("#uservalidate").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#username").removeClass("is-invalid")
+                        $("#username").addClass("is-valid")
+                        $("#uservalidate").hide();
+                    }
+                    // check email
+                    email = $("#email").val();
+                    if (email == "") {
+                        $("#email").addClass("is-invalid")
+                        $("#emailvalidate").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#email").removeClass("is-invalid")
+                        $("#email").addClass("is-valid")
+                        $("#emailvalidate").hide();
+                    }
+                    // check password
+                    password = $("#pswd").val();
+                    confirmp = $("#confirm").val();
+                    if (password == "") {
+                        $("#pswd").addClass("is-invalid")
+                        $("#nopass").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#nopass").hide()
+                    }
+                    if (password.length < 8) {
+                        $("#pswd").addClass("is-invalid")
+                        $("#passlen").show()
+                        //$("#passlen").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#pswd").removeClass("is-invalid")
+                        $("#pswd").addClass("is-valid")
+                        $("#nopass").hide();
+                        $("#passlen").hide();
+                    }
+                    if (confirmp == "") {
+                        $("#confirm").addClass("is-invalid")
+                        $("#nocon").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#confirm").removeClass("is-invalid")
+                        $("#confirm").addClass("is-valid")
+                        $("#nocon").hide();
+                    }
+                    console.log(invalid)
+                    if (password != confirmp) {
+                        $("#confirm").addClass("is-invalid")
+                        $("#nomatch").show();
+                        invalid = true;
+                    }
+                    else {
+                        $("#nomatch").hide();
+                    }
+                    if (invalid) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        e.stopPropagation();
+                    }
+                    else {
+                        $("#signupform").submit();
+                    }
+
+                }
+            </script>
+        </main>
+    </body>
+
+</html>

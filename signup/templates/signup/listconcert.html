@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+{% block title %}
+Concerts
+{% endblock %}
+{% block body %}
+<h1>Concerts</h1>
+{% if myconcert %}
+<h2>My Concerts</h2>
+<table class="table">
+    <thead>
+        <th scope="col">Date/Time</th>
+        <th scope="col">Location</th>
+    </thead>
+    <tbody>
+        {% for concert in concerts %}
+        <tr>
+            <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
+            <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
+        </tr>
+        {% endfor %}
+        {% if not concerts %}
+        <tr>
+            <td colspan="2">You haven't signed up for any concerts yet.</td>
+        </tr> 
+        {% endif %}
+    </tbody>
+</table>
+{% else %}
+<h2>Upcoming Concerts</h2>
+<table class="table">
+    <thead>
+        <th scope="col">Date/Time</th>
+        <th scope="col">Location</th>
+        <th scope="col"></th>
+    </thead>
+{% for concert in upcoming %}
+    <tr>
+        <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
+        <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
+        <td> <a class="btn btn-primary {% if concert.locked and not ismanager %} disabled {% endif %}" href="{% url 'signupconcert' concert_id=concert.id %}" >Sign up</a>
+    </tr>
+
+    {% endfor %} 
+    {% if not concertsexist %}
+    {% if ismanager %}
+    <tr>
+        <td colspan="3">There don't seem to be any upcoming concerts. Why don't you <a href="{% url 'createconcert' %}">create one now?</a></td>
+    </tr> 
+    {% else %}
+    <tr>
+        <td colspan="3">There don't seem to be any upcoming concerts. </td>
+    </tr>
+    {% endif %}
+    {% else %}
+    {% if ismanager %}
+    <tr align="center">
+        <td colspan="3"><a class="btn btn-primary" href="{% url 'createconcert' %}">Create New Concert</a></td>
+    </tr> 
+    {% endif %}
+    {% endif %}
+
+</table>
+{% if previous %}
+<h2>Past Concerts</h2>
+<table class="table">
+    <thead>
+        <th scope="col">Date/Time</th>
+        <th scope="col">Location</th>
+    </thead>
+{% for concert in previous %}
+    <tr>
+        <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
+        <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
+    </tr>
+
+    {% endfor %} 
+
+</table>
+{% endif %}
+{%endif %}
+{% endblock %}

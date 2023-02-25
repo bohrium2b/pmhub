@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+{% block body %}
+<style>
+    #createconcertform {
+        max-width: 50%;
+        align-items: center;
+        justify-content: center;
+        justify-self: center;
+    }
+</style>
+<script src="/static/jquery/jquery-3.6.3.min.js"></script>
+<script src="/static/tinymce/tinymce.min.js"></script>
+<h1>{% if not edit %}Create a new concert{%else%}Editing concert at {{concert.location}} on {{concert.dateandtime|date:"n/j/Y \@ g:i A"}}{%endif%}</h1>
+<form class="form container-fluid" action="{% if not edit %}{% url 'createconcert' %}{%else%}{% url 'editconcert' concert_id=concert.id %}{%endif%}" method="post" id="createconcertform" align="center">
+{% csrf_token %}
+<div class="mb-3">
+    <label for="createconcert-location" class="form-label">Concert Location</label>
+    <input type="text" id="createconcert-location" class="form-control" name="location" required value="{{concert.location}}">
+</div>
+<div class="mb-3">
+    <label for="createconcert-datetime" class="form-label">Concert Date and Time</label>
+    <input type="datetime-local" id="createconcert-datetime" class="form-control" name="datetime" value="{{concert.dateandtime|date:'Y-m-d\TH:i'}}" required>
+</div>
+<div class="mb-3">
+    <label for="createconcert-maxtime" class="form-label">Maximum Concert Duration</label>
+    <input type="number" id="createconcert-maxtime" class="form-control" name="maxtime" value="{{concert.maxtime}}" required>
+</div>
+<div class="mb-3">
+    <label for="createconcert-piano" class="form-label">Piano available</label>
+    <input type="checkbox" {% if concert.piano %} selected {% endif %} id="createconcert-piano" class="form-check-input" name="piano">
+</div>
+<div class="mb-3">
+    <label for="createconcert-description" class="form-label">Description (optional)</label>
+    <textarea name="description" id="createconcert-description">{{ concert.description | safe }}</textarea>
+</div>
+<div class="mb-3">
+    <input type="submit" value="Submit" class="form-control">
+</div>
+<script>
+    tinymce.init({
+        selector: "#createconcert-description",
+        plugins: "lists link",
+        menubar: false,
+        toolbar: "undo redo copy cut paste | h2 h3 bold italic underline removeformat | bullist numlist | link openlink unlink",
+        branding: false
+    }).then(() => {
+        console.log("Loaded TinyMCE")
+        $(".tox-promotion").hide();
+    });
+    $(document).ready(() => {
+        $("#tox-promotion").hide();
+    })
+</script>
+</form>
+{% endblock %}

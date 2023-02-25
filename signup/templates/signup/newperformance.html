@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+{% block title %}
+Sign up to perform
+{% endblock %}
+{% block body %}
+<script src="/static/jquery/jquery-3.6.3.min.js" crossorigin="anonymous"></script>
+<link href="/static/select2/css/select2.min.css" rel="stylesheet" />
+<script src="/static/select2/js/select2.min.js"></script>
+<script src="/static/tinymce/tinymce.min.js"></script>
+<style>
+    body {
+        max-width: 100%;
+        margin-right: 1px;
+        overflow-x: hidden;
+    }
+</style>
+<style>
+    #newperformanceform {
+        max-width: 40%;
+        align-items: center;
+        justify-content: center;
+        justify-self: center;
+    }
+</style>
+<h1>Signing up to perform at {{ concert.location }} on {{concert.dateandtime|date:'n/j/Y'}}</h1>
+<form class="form container-fluid" action="{% if isedit%}{%url 'editperformance' concert.id performance.id%}{%else%}{% url 'signupconcert' concert.id %}{%endif%}"  method="post" id="newperformanceform" align="center">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="newperformance-performer" class="form-label">Other Performer(s)</label>
+        <select id="newperformance-performer" name="performers" class="form-control" style="align-items: center;" multiple style="min-width: 100%;">
+            {% for performer in performers %}
+            <option value="{{ performer.id }}" {% if isedit == True and performer.id in performanceperformers %} selected {%else%} {%if request.user.id == performer.id %} selected {% endif %}{%endif%}>{{ performer.first_name }} {{performer.last_name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="newperformance-piece" class="form-label">Piece</label>
+        <input type="text" id="newperformance-piece" class="form-control" name="piece" value="{{performance.piece}}" required>
+    </div>
+    <div class="mb-3">
+        <label for="newperformance-composer" class="form-label">Composer</label>
+        <input type="text" id="newperformance-composer" class="form-control" name="composer" value="{{performance.composer}}" required>
+    </div>
+    <div class="mb-3">
+        <label for="newperformance-arranger" class="form-label">Arranger (if none, leave blank)</label>
+        <input type="text" id="newperformance-arranger" class="form-control" value="{{performance.arranger}}" name="arranger">
+    </div>
+    <div class="mb-3">
+        <label for="newperformance-time" class="form-label">Duration (in minutes)</label>
+        <input type="number" id="newperformance-time" class="form-control" value="{{performance.duration}}" name="duration">
+    </div>
+    <div class="mb-3">
+        <label for="createconcert-description" class="form-label">Comment (optional)</label>
+        <textarea name="comment" class="form-control" id="newperformance-comment">{{performance.comment|safe}}</textarea>
+    </div>
+    <div class="mb-3">
+        <input type="submit" value="Request" class="btn-block btn btn-primary">
+        <div class="form-text">Your performance request may take a minute to process. In some cases, the staff may choose to reject your request. </div>
+    </div>
+    </form>
+<script>
+    $(document).ready(
+        function () {
+            $("#newperformance-performer").select2();
+        }
+    )
+    
+</script>
+<script>
+    tinymce.init({
+        selector: "#newperformance-comment",
+        plugins: "lists link",
+        menubar: false,
+        toolbar: "undo redo |  bold italic underline removeformat",
+        branding: false,
+        statusbar: false
+    }).then(() => {
+        console.log("Loaded TinyMCE")
+        $(".tox-promotion").hide();
+    });
+    $(document).ready(() => {
+        $("#tox-promotion").hide();
+    })
+</script>
+<div style="height:10px;"></div>
+{% endblock %}

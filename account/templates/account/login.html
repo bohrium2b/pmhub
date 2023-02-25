@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+{% block title %}
+Login
+{% endblock %}
+{% block body %}
+<h1>Login to Project Melody HUB</h1>
+<style>
+    #loginform {
+        max-width: 30%;
+        align-self: center;
+        align-items: center;
+        justify-content: center;
+        justify-self: center;
+        align-items: center;
+    }
+</style>
+<form class="container-fluid" id="loginform" action="{% url 'login' %}" method="POST">
+        {% csrf_token %}
+        <input name="next" value="{{next}}" hidden>
+        <div class="mb-3 form-floating">
+            <input name="username" type="text" id="login-username" class="form-control" />
+            <label for="login-username" class="form-label">Username</label>
+        </div>
+        <div class="mb-3 form-floating">
+            <input class="form-control" type="password" name="password" id="login-pswd">
+            <label for="login-pswd" class="form-label">Password</label>
+        </div>
+        <div class="mb-3">
+            <input type="submit" class="btn btn-primary center w-100" value="Login">
+        </div>
+        <div> No account yet? Join Project Melody now.</div>
+</form>
+{% endblock %}

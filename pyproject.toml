@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "project melody web hub"
+version = "0.0.1"
+description = ""
+authors = ["Dalton Ma"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Django = "^4.1.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
