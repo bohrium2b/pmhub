@@ -55,8 +55,10 @@ def createconcert(request):
         maxduration = request.POST.get('maxtime')
         description = request.POST.get('description')
         piano = True if request.POST.get('piano') else False
+        signuplink = request.POST.get('signuplink')
+        title = request.POST.get('title')
         print(dateandtime)
-        newconcert = Concert(location = location, dateandtime = dateandtime, maxtime = maxduration, piano = piano, description = description)
+        newconcert = Concert(title=title, location = location, dateandtime = dateandtime, maxtime = maxduration, piano = piano, description = description, signuplink = signuplink)
         newconcert.save()
         newconcert.manager.set([eventmanager])
         newconcert.save()
@@ -68,7 +70,10 @@ def newperformance(request, concert_id):
     concert = Concert.objects.filter(id=concert_id)
     if not concert:
         return render(request, "404.html")
+    
     concert: Concert = concert[0]
+    if concert.signuplink:
+        return render(request, "404.html")
     # check if concert is locked
     iseventmanager = request.user.groups.filter(name='event-manager').exists()
     if concert.locked and not iseventmanager:
@@ -163,6 +168,8 @@ def editconcert(request, concert_id):
         maxduration = request.POST.get('maxtime')
         description = request.POST.get('description')
         piano = True if request.POST.get('piano') else False
+        signuplink = request.POST.get('signuplink')
+        title = request.POST.get("title")
         if not dateandtime or not location or not maxduration:
             messages.error(request, "Please fill out all required fields.")
             return redirect("editconcert", concert_id=concert_id)
@@ -171,6 +178,8 @@ def editconcert(request, concert_id):
         concert.maxtime = int(maxduration)
         concert.description = description
         concert.piano = piano
+        concert.signuplink = signuplink
+        concert.title = title
         concert.save()
         totaltimes = 0
         for performance in concert.performance_set.all():
@@ -269,6 +278,8 @@ def editperformance(request, concert_id, performance_id):
         print(performance.id)
     except Exception:
         return render(request, "404.html")
+    if concert.signuplink:
+        return render(request, "404.html")
     iseventmanager = request.user.groups.filter(name='event-manager').exists()
     if not(request.user.groups.filter(name='event-manager').exists() or performance.performer.filter(id=request.user.id).exists()):
         raise PermissionDenied() 
@@ -324,6 +335,8 @@ def deleteperformance(request, concert_id, performance_id):
         concert = Concert.objects.get(id=concert_id)
         performance = Performance.objects.get(id=performance_id)
     except Exception:
+        return render(request, "404.html")
+    if concert.signuplink:
         return render(request, "404.html")
     iseventmanager = request.user.groups.filter(name='event-manager').exists()
     if not(request.user.groups.filter(name='event-manager').exists() or performance.performer.filter(id=request.user.id).exists()):

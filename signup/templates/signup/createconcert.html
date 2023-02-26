@@ -14,6 +14,10 @@
 <form class="form container-fluid" action="{% if not edit %}{% url 'createconcert' %}{%else%}{% url 'editconcert' concert_id=concert.id %}{%endif%}" method="post" id="createconcertform" align="center">
 {% csrf_token %}
 <div class="mb-3">
+    <label for="createconcert-title" class="form-label">Concert Title (optional, leave blank to use "Project Melody")</label>
+    <input type="text" id="createconcert-title" class="form-control" name="title" value="{{concert.title}}">
+</div>
+<div class="mb-3">
     <label for="createconcert-location" class="form-label">Concert Location</label>
     <input type="text" id="createconcert-location" class="form-control" name="location" required value="{{concert.location}}">
 </div>
@@ -28,6 +32,10 @@
 <div class="mb-3">
     <label for="createconcert-piano" class="form-label">Piano available</label>
     <input type="checkbox" {% if concert.piano %} selected {% endif %} id="createconcert-piano" class="form-check-input" name="piano">
+</div>
+<div class="mb-3">
+    <label for="createconcert-signuplink" class="form-label">Signup Link (if performers should signup somewhere else, like Givepulse/other system)</label>
+    <input type="text" id="createconcert-signuplink" class="form-control" name="signuplink" value="{{concert.signuplink}}">
 </div>
 <div class="mb-3">
     <label for="createconcert-description" class="form-label">Description (optional)</label>

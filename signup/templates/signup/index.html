@@ -15,7 +15,7 @@ Home
     <tr>
         <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
         <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
-        <td> <a class="btn btn-primary {% if concert.locked and not ismanager %} disabled {% endif %}" href="{% url 'signupconcert' concert_id=concert.id %}" >Sign up</a>
+        <td> <a class="btn btn-primary {% if concert.locked and not ismanager %} disabled {% endif %}" href="{% if concert.signuplink%}{{concert.signuplink}}{%else%}{% url 'signupconcert' concert_id=concert.id %}{%endif%}" >Sign up</a>
         </td>
     </tr>
 

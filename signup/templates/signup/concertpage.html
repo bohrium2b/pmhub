@@ -18,7 +18,7 @@
 <div class="row container-fluid" style="margin-top: 10px;">
 
     <div class="col-8">
-        <h1 id="title">{{ concert.location }} On {{ concert.dateandtime | date:"n/j/Y \@ g:i A"}}</h1>
+        <h1 id="title">{{concert.title}} @ {{ concert.location }} On {{ concert.dateandtime | date:"n/j/Y \@ g:i A"}}</h1>
         <hr>
         <div>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -44,14 +44,15 @@
             </svg>
             <b>Duration: </b> {{concert.maxtime}} minutes <br>
             <b>Piano </b> {%if concert.piano%} available {%else%}unavailable{%endif%}<br>
-            <b>{% if concert.locked %}Concert signups disabled{%else%}Concert signups enabled{%endif%}</b>
+            <b>{% if concert.locked %}Concert signups disabled{%else%}Concert signups enabled{%endif%}</b><br>
+            <b><i class="fa-solid fa-arrow-up-right-from-square"></i> Signup link: </b> {% if concert.signuplink %}{{concert.signuplink}}{%else%}Use signup button{%endif%}
         </div>
         <p>{{ concert.description | safe }}</p>
     </div>
     <div class="col-3" style="text-align: end;justify-self: center; ">
         <h2>
             <div class="btn-group">
-                <a href="{% url 'signupconcert' concert_id=concert.id %}"
+                <a href="{% if not concert.signuplink %}{% url 'signupconcert' concert_id=concert.id %}{% else %}{{concert.signuplink}}{%endif%}"
                     class="btn btn-primary {% if concert.locked and not useriseventmanager %} disabled {% endif %}">Sign Up</a>
                     {% if useriseventmanager %}
                 <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
@@ -99,6 +100,7 @@
 </div>
 
 <hr>
+{% if not concert.signuplink %}
 <h2>Performances</h2>
 <table data-order='[1, "asc"]' class="table table-hover" id="performancelist">
     <thead>
@@ -200,6 +202,9 @@
         });
     })
 </script>
+{% else %}
+<div class="alert alert-danger">This concert does not have a signup via Project Melody HUB. Instead use the signup button to signup. You will be redirected to the signup page.</div>
+{% endif %}
 <!-- PADDING FOR THE BOTTOM OF THE PAGE -- DO NOT REMOVE -->
 <div style="height: 20px;"></div>
 {% endblock %}
