@@ -12,6 +12,7 @@ Django = "^4.1.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
+pylint = "^2.16.3"
 
 [build-system]
 requires = ["poetry-core"]
