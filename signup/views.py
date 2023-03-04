@@ -127,9 +127,7 @@ def newperformance(request, concert_id):
         concert.save()
         lockerror = True
     if lockerror:
-        messages.error(request,
-                       "This concert has been locked. New performances have been disabled.")
-        return redirect("concertpage", concert_id=concert_id)
+        return render(request, "error/concertlocked.html")
 
     if request.method == "GET":
         # get list of users
