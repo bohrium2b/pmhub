@@ -8,11 +8,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 Django = "^4.1.6"
+djangorestframework = "^3.14.0"
 
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 pylint = "^2.16.3"
+commitizen = "^2.42.1"
+pre-commit = "^3.1.1"
 
 [build-system]
 requires = ["poetry-core"]
