@@ -1,12 +1,149 @@
 {% extends 'layout.html' %}
+{% load tz %}
+{% get_current_timezone as TIME_ZONE %}
 {% block title %}
 Concerts
 {% endblock %}
 {% block body %}
-<h1>Concerts</h1>
+<script src="/static/jquery/jquery-3.6.3.min.js" crossorigin="anonymous"></script>
+<script>
+    const locale = "{{ locale }}";
+    console.log(locale);
+    const ismyconcert = {% if myconcert %} true {% else %} false {%endif%};
+</script>
+<div id="app"></div>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="/static/luxon.js"></script>
+<script type="text/babel">
+    const Concert = (props) => {
+        const datetime = props.datetime;
+        const title = props.title;
+        const location = props.location;
+        const link = props.link;
+        const locked = props.locked;
+        let classes = "";
+        if (!locked) {
+            classes = "btn btn-primary";
+        } else {
+            classes = "btn btn-primary disabled"
+        }
+        return (
+            <tr><th>{datetime}</th><td><a href={link}>{title}</a></td><td>{location}</td><td><a className={classes} href={link}>Sign up</a></td></tr>
+        )
+    }
+
+    const ConcertList = (props) => {
+        const concerts = props.concerts;
+        return (
+            <table className="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date/Time</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {concerts.length !== 0 ? concerts.map((concert) => {
+                        const datetime = luxon.DateTime.fromISO(concert.dateandtime).setZone(locale);
+                        console.log(datetime);
+                        console.log(datetime.toLocaleString(luxon.DateTime.DATETIME_SHORT));
+                        return (<Concert key={concert.id} datetime={datetime.toLocaleString(luxon.DateTime.DATETIME_SHORT)} location={concert.location} title={concert.title} link={"/signup/concert/" + concert.id} locked={concert.locked} />)
+
+                    }) : <tr><td colSpan="4">No concerts found</td></tr>}
+                </tbody>
+            </table>
+        )
+    }
+
+    const ConcertFetcher = () => {
+        const [concerts, setConcerts] = React.useState(null);
+        const [myconcerts, setMyConcerts] = React.useState(null);
+        React.useEffect(() => {
+            $.get("/api/concerts/").done(
+                (data) => {
+                    console.log(data);
+                    setConcerts(data);
+                }
+            );
+            $.get("/api/myconcert/").done(
+                (data) => {
+                    console.log(data);
+                    setMyConcerts(data);
+                }
+            );
+        }, []);
+        React.useEffect(() => {
+            var intervals = setInterval(() => {
+                $.get("/api/concerts/").done(
+                    (data) => {
+                        console.log(data);
+                        setConcerts(data);
+                    }
+                );
+                $.get("/api/myconcert/").done(
+                    (data) => {
+                        console.log(data);
+                        setMyConcerts(data);
+                    }
+                );
+            }, 25000);
+            return () => { clearInterval(intervals) };
+        }, []);
+        console.log("Concerts");
+        console.log(concerts);
+        let beforeconcerts = [];
+        let afterconcerts = [];
+        let now = luxon.DateTime.now();
+        if (!ismyconcert && concerts) {
+            concerts.forEach((concert) => {
+                if (luxon.DateTime.fromISO(concert.dateandtime) > now && concert.locked == false) {
+                    beforeconcerts.push(concert);
+                } else if (luxon.DateTime.fromISO(concert.dateandtime) < now || concert.locked == true) {
+                    afterconcerts.push(concert)
+                }
+            })
+            return (
+                <React.Fragment>
+                    <h2>Upcoming Concerts</h2>
+                    <ConcertList concerts={beforeconcerts} />
+                    <h2>Previous Concerts</h2>
+                    <ConcertList concerts={afterconcerts} />
+                </React.Fragment>
+            )
+        } else if (ismyconcert && myconcerts) {
+            return (
+                <React.Fragment>
+                    <h2>My Concerts</h2>
+                    <ConcertList concerts={myconcerts} />
+                </React.Fragment>
+            )
+        } else {
+            return (<div>Loading concerts ...</div>)
+        }
+
+    }
+    const App = () => {
+
+        return (
+            <React.Fragment>
+                <h1>Concerts</h1>
+                <ConcertFetcher />
+            </React.Fragment>
+        )
+    }
+    const domContainer = document.querySelector('#app');
+    const root = ReactDOM.createRoot(domContainer);
+    root.render(<App />);
+</script>
+<!--
 {% if myconcert %}
 <h2>My Concerts</h2>
-<table class="table">
+-->
+<!--<table class="table">
     <thead>
         <th scope="col">Date/Time</th>
         <th scope="col">Location</th>
@@ -15,13 +152,14 @@ Concerts
         {% for concert in concerts %}
         <tr>
             <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
-            <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
+            <td><a href="{% url 'concertpage' concert_id=concert.id %}"
+                    title="Go to concert page">{{ concert.location }}</a></td>
         </tr>
         {% endfor %}
         {% if not concerts %}
         <tr>
             <td colspan="2">You haven't signed up for any concerts yet.</td>
-        </tr> 
+        </tr>
         {% endif %}
     </tbody>
 </table>
@@ -33,19 +171,23 @@ Concerts
         <th scope="col">Location</th>
         <th scope="col"></th>
     </thead>
-{% for concert in upcoming %}
+    {% for concert in upcoming %}
     <tr>
         <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
-        <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
-        <td> <a class="btn btn-primary {% if concert.locked and not ismanager %} disabled {% endif %}" href="{% if concert.signuplink%}{{concert.signuplink}}{%else%}{% url 'signupconcert' concert_id=concert.id %}{%endif%}" >Sign up</a>
+        <td><a href="{% url 'concertpage' concert_id=concert.id %}"
+                title="Go to concert page">{{ concert.location }}</a></td>
+        <td> <a class="btn btn-primary {% if concert.locked and not ismanager %} disabled {% endif %}"
+                href="{% if concert.signuplink%}{{concert.signuplink}}{%else%}{% url 'signupconcert' concert_id=concert.id %}{%endif%}">Sign
+                up</a>
     </tr>
 
-    {% endfor %} 
+    {% endfor %}
     {% if not concertsexist %}
     {% if ismanager %}
     <tr>
-        <td colspan="3">There don't seem to be any upcoming concerts. Why don't you <a href="{% url 'createconcert' %}">create one now?</a></td>
-    </tr> 
+        <td colspan="3">There don't seem to be any upcoming concerts. Why don't you <a
+                href="{% url 'createconcert' %}">create one now?</a></td>
+    </tr>
     {% else %}
     <tr>
         <td colspan="3">There don't seem to be any upcoming concerts. </td>
@@ -55,7 +197,7 @@ Concerts
     {% if ismanager %}
     <tr align="center">
         <td colspan="3"><a class="btn btn-primary" href="{% url 'createconcert' %}">Create New Concert</a></td>
-    </tr> 
+    </tr>
     {% endif %}
     {% endif %}
 
@@ -67,15 +209,25 @@ Concerts
         <th scope="col">Date/Time</th>
         <th scope="col">Location</th>
     </thead>
-{% for concert in previous %}
+    {% for concert in previous %}
     <tr>
         <th scope="row">{{concert.dateandtime | date:"n/j/Y \@ g:i A"}}</th>
-        <td><a href="{% url 'concertpage' concert_id=concert.id %}" title="Go to concert page">{{ concert.location }}</a></td>
+        <td><a href="{% url 'concertpage' concert_id=concert.id %}"
+                title="Go to concert page">{{ concert.location }}</a></td>
     </tr>
 
-    {% endfor %} 
+    {% endfor %}
 
 </table>
 {% endif %}
+-->
 {%endif %}
+{% if ismanager %}
+<div class="fixed-action-btn">
+    <a class="btn btn-floating btn-success text-white btn-lg" href="{% url 'createconcert' %}" data-mdb-toggle="tooltip"
+        title="Create a new concert">
+        <i class="fas fa-plus"></i>
+    </a>
+</div>
+{% endif %}
 {% endblock %}
