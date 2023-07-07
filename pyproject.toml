@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.8"
 Django = "^4.1.6"
 djangorestframework = "^3.14.0"
+rich = "^13.4.2"
+whitenoise = "^6.5.0"
 
 
 [tool.poetry.group.dev.dependencies]
