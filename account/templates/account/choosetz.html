@@ -1,0 +1,52 @@
+<!doctype html>
+<!--
+* Tabler - Premium and Open Source dashboard template with responsive and high quality UI.
+* @version 1.0.0-beta17
+* @link https://tabler.io
+* Copyright 2018-2023 The Tabler Authors
+* Copyright 2018-2023 codecalm.net Paweł Kuna
+* Licensed under MIT (https://github.com/tabler/tabler/blob/master/LICENSE)
+-->
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+        <title>Choose your Timezone</title>
+    </head>
+
+    <body class=" border-top-wide border-primary d-flex flex-column">
+        <div class="page page-center">
+            <div class="container-tight py-4">
+                <div class="empty">
+                    <div class="empty-header">Choose Location</div>
+                    <p class="empty-title">We rely on your timezone to display times and dates properly. </p>
+                    <p class="empty-subtitle text-muted">
+                        Select your timezone below. We don't save this information in our servers. We will never sell your location or other data.
+                    </p>
+                    <div class="empty-action">
+                        <form action="/signup/settz" method="POST" class="form">
+                            {% csrf_token %}
+                            <div class="row mb-4">
+                                <select name="tz" class="form-select">
+                                <option selected>Auckland</option>
+                                <option>Austin</option>
+                                <option>Seoul</option>
+                                <option>New York</option>
+                            </select>
+                            </div>
+                            <div class="row mb-4">
+                                <input type="submit" class="form-control btn btn-success" value="Let's Go!">
+                            </div>
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>

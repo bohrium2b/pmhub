@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import pytz
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.http import HttpResponse
 #from django.http import (HttpResponsePermanentRedirect,
 #                         HttpResponseRedirect)
 from django.shortcuts import redirect, render
-from django.utils.timezone import now
+from django.utils import timezone
 
 from .models import Concert, Performance
 
@@ -20,7 +22,12 @@ def index(request):
     The home page: display a list of concerts + signup links for them.
     """
     # Get concerts IN THE FUTURE
-    concerts = Concert.objects.filter(dateandtime__gte=now()).order_by("dateandtime")
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
+    concerts = Concert.objects.filter(dateandtime__gte=timezone.now()).order_by("dateandtime")
     print(request.user.groups.filter(name="event-manager").exists())
     print(concerts)
     print(bool(concerts))
@@ -35,14 +42,28 @@ def index(request):
     )
 
 
+def settz(request):
+    if request.method == "GET":
+        return render(request, "account/choosetz.html")
+    if request.method == "POST":
+        tzs: dict[str, str] = {"Austin": "America/Chicago", "Auckland": "Pacific/Auckland", "Seoul": "Asia/Seoul", "New York": "America/New_York"}
+        request.session["USER_TIMEZONE"] = tzs[request.POST.get("tz")]
+        return redirect("signup-index")
+
+
 def listconcert(request):
     """
     Show list of concerts in the future and in the past. Add signup links.
     If concertmanager, show buttons to add concerts.
     """
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
     # list concerts in 2 sections
-    upcoming = Concert.objects.filter(dateandtime__gte=now()).order_by("dateandtime")
-    previous = Concert.objects.filter(dateandtime__lt=now()).order_by("dateandtime")
+    upcoming = Concert.objects.filter(dateandtime__gte=timezone.now()).order_by("dateandtime")
+    previous = Concert.objects.filter(dateandtime__lt=timezone.now()).order_by("dateandtime")
     return render(
         request,
         "signup/listconcert.html",
@@ -51,6 +72,7 @@ def listconcert(request):
             "previous": previous,
             "ismanager": request.user.groups.filter(name="event-manager").exists(),
             "concertsexist": bool(upcoming),
+            "locale": request.session["USER_TIMEZONE"]
         },
     )
 
@@ -60,6 +82,12 @@ def createconcert(request):
     """
     Create a concert with a date, a title, a time, description, etc.
     """
+    tzs: dict[str, str] = {"Austin": "America/Chicago", "Auckland": "Pacific/Auckland"}
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
     if request.method == "GET":
         # Only allow event managers to create concerts
         if not request.user.groups.filter(name="event-manager").exists():
@@ -71,13 +99,22 @@ def createconcert(request):
             # Only allow event managers to create concerts
             raise PermissionDenied()
         eventmanager = request.user
-        dateandtime = request.POST.get("datetime")
+        dateandtimeraw: str = request.POST.get("datetime")
+        print(dateandtimeraw)
         location = request.POST.get("location")
         maxduration = request.POST.get("maxtime")
-        description = request.POST.get("description")
+        description: str | None = request.POST.get("description")
         piano = bool(request.POST.get("piano"))
-        signuplink = request.POST.get("signuplink")
-        title = request.POST.get("title")
+        signuplink: str | None = request.POST.get("signuplink")
+        title: str | None = request.POST.get("title")
+        title = title if title else "Project Melody"
+        userselectedtz = request.POST.get("timezone")
+        timez = pytz.timezone(tzs[userselectedtz])
+        timezone.activate(timez)
+        dateandtime: datetime = datetime.fromisoformat(dateandtimeraw)
+        dateandtime = timez.localize(dateandtime)
+        # dateandtime = dateandtime.replace(tzinfo=timez)
+        print(dateandtime.tzinfo)
         print(dateandtime)
         newconcert = Concert(
             title=title,
@@ -118,7 +155,7 @@ def newperformance(request, concert_id):
     for performance in concert.performance_set.all():
         totaltimes += performance.duration
     # Check concert date
-    if concert.dateandtime < now():
+    if concert.dateandtime < timezone.now():
         concert.locked = True
         concert.save()
 
@@ -191,12 +228,19 @@ def concertpage(request, concert_id):
     Show concert details + list of performances
     """
     try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
+    try:
         concert = Concert.objects.get(id=concert_id)
     except ObjectDoesNotExist:
         return render(request, "404.html")
-    if concert.dateandtime < now():
+    if concert.dateandtime < timezone.now():
         concert.locked = True
         concert.save()
+    print(concert.dateandtime.tzinfo)
+    print(concert.dateandtime)
     useriseventmanager = False
     if request.user.groups.filter(name="event-manager").exists():
         useriseventmanager = True
@@ -210,8 +254,13 @@ def concertpage(request, concert_id):
 @login_required()
 def editconcert(request, concert_id):
     """
-    Let ONLY EVENT MANAGERS edit a concert.
+    Lets ONLY EVENT MANAGERS edit a concert.
     """
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
     try:
         concert = Concert.objects.get(id=concert_id)
     except ObjectDoesNotExist:
@@ -223,7 +272,13 @@ def editconcert(request, concert_id):
             request, "signup/createconcert.html", {"edit": True, "concert": concert}
         )
 
-    dateandtime = request.POST.get("datetime")
+    dateandtimeraw = request.POST.get("datetime")
+    userselectedtz = request.POST.get("timezone")
+    tzs: dict[str, str] = {"Austin": "America/Chicago", "Auckland": "Pacific/Auckland", "Seoul": "Asia/Seoul", "New York": "America/New_York"}
+    timez = pytz.timezone(tzs[userselectedtz])
+    timezone.activate(timez)
+    dateandtime: datetime = datetime.fromisoformat(dateandtimeraw)
+    dateandtime = timez.localize(dateandtime)
     location = request.POST.get("location")
     maxduration = request.POST.get("maxtime")
     description = request.POST.get("description")
@@ -244,7 +299,7 @@ def editconcert(request, concert_id):
     totaltimes = 0
     for performance in concert.performance_set.all():
         totaltimes += performance.duration
-    if totaltimes < int(maxduration) or concert.dateandtime < now():
+    if totaltimes < int(maxduration) or concert.dateandtime < timezone.now():
         concert.locked = False
         concert.save()
     return redirect("concertpage", concert_id=concert_id)
@@ -272,6 +327,8 @@ def lockconcert(request, concert_id):
     """
     Manual Lock a concert.
     """
+    if request.method == "POST":
+        return render(request, "error/teapot.html")
     try:
         concert = Concert.objects.get(id=concert_id)
     except ObjectDoesNotExist:
@@ -295,6 +352,11 @@ def myconcerts(request):
     List of concerts a user has signed up for.
     """
     # find user's concert
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
     allconcerts = Concert.objects.all()
     userconcerts = []
     for concert in allconcerts:
@@ -304,7 +366,7 @@ def myconcerts(request):
     return render(
         request,
         "signup/listconcert.html",
-        {"myconcert": True, "concerts": userconcerts},
+        {"myconcert": True, "concerts": userconcerts, "locale": request.session["USER_TIMEZONE"]},
     )
 
 
@@ -312,6 +374,13 @@ def concertjson(request):
     """
     API to get a list of concerts in json format.
     """
+    if request.method == "POST":
+        return render(request, "error/teapot.html")
+    try:
+        if request.session["USER_TIMEZONE"]:
+            timezone.activate(pytz.timezone(request.session["USER_TIMEZONE"]))
+    except Exception:
+        return redirect("settz")
     loggedin = bool(request.user)
     # get start and end dates
     print(type(request.GET.get("start")))
@@ -348,6 +417,8 @@ def calendar(request):
     """
     Display a calendar with concerts on it.
     """
+    if request.method == "POST":
+        return render(request, "error/teapot.html")
     return render(request, "signup/calendar.html")
 
 
@@ -359,6 +430,8 @@ def editperformance(request, concert_id, performance_id):
     try:
         concert = Concert.objects.get(id=concert_id)
         performance = Performance.objects.get(id=performance_id)
+        if performance.concert != concert:
+            return render(request, "404.html")
     except ObjectDoesNotExist:
         return render(request, "404.html")
     if concert.signuplink:
@@ -378,7 +451,7 @@ def editperformance(request, concert_id, performance_id):
         print(performance.performer.all())
         return render(
             request,
-            "signup/newperformance.html",
+            "signup/editperformance.html",
             {
                 "edit": True,
                 "concert": concert,
@@ -399,8 +472,8 @@ def editperformance(request, concert_id, performance_id):
     duration = request.POST.get("duration")
     comment = request.POST.get("comment")
     if not duration or not composer or not piece or not performers:
-        messages.error(request, "Please fill out required fields.")
-        return redirect("concertpage", concert_id=concert_id)
+        print(f"{composer} {duration} {piece} {performers}")
+        return HttpResponse("Please Fill Out All Required Fields")
     if int(duration) + totaltimes >= concert.maxtime + 10 and not iseventmanager:
         # deny
         messages.warning(request, "Your revised time was too long!")
@@ -412,12 +485,12 @@ def editperformance(request, concert_id, performance_id):
     performance.duration = int(duration)
     performance.comment = comment
     performance.performer.set(performers)
+    print(comment)
     performance.save()
     if iseventmanager and int(duration) + totaltimes >= concert.maxtime:
         concert.locked = True
         concert.save()
-    messages.success(request, "You successfully edited a performance!")
-    return redirect("concertpage", concert_id=concert_id)
+    return HttpResponse("Performance edited successfully.")
 
 
 def deleteperformance(request, concert_id, performance_id):
