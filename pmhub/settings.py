@@ -30,7 +30,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
+TIME_ZONE = "Pacific/Auckland"
 LOGIN_URL = "/account/login"
 
 
@@ -47,6 +47,8 @@ MESSAGE_TAGS = {
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework',
+    'api',
     'mainapp',
     'account',
     'signup',
@@ -133,3 +135,10 @@ STATIC_ROOT = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache'
+    }
+}
