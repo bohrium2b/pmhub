@@ -5,3 +5,4 @@
 /db.sqlite3
 /signup/static/*
 .gitGraph/*
+.python-version
