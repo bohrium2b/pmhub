@@ -54,9 +54,9 @@
 <script>
     tinymce.init({
         selector: "#createconcert-description",
-        plugins: "lists link",
+        plugins: "lists link charmap emoticons",
         menubar: false,
-        toolbar: "undo redo copy cut paste | h2 h3 bold italic underline removeformat | bullist numlist | link openlink unlink",
+        toolbar: "undo redo copy cut paste | h2 h3 bold italic charmap emoticons removeformat | bullist numlist | link openlink unlink",
         branding: false
     }).then(() => {
         console.log("Loaded TinyMCE")

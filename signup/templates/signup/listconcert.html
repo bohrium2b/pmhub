@@ -19,18 +19,19 @@ Concerts
 <script type="text/babel">
     const Concert = (props) => {
         const datetime = props.datetime;
-        const title = props.title;
+        const title = twemoji.parse(props.title, { base: "/static/twemoji/", size: 72, ext: '.svg', folder: 'svg' });
         const location = props.location;
         const link = props.link;
         const locked = props.locked;
         let classes = "";
+        
         if (!locked) {
             classes = "btn btn-primary";
         } else {
             classes = "btn btn-primary disabled"
         }
         return (
-            <tr><th>{datetime}</th><td><a href={link}>{title}</a></td><td>{location}</td><td><a className={classes} href={link}>Sign up</a></td></tr>
+            <tr><th>{datetime}</th><td><a href={link} dangerouslySetInnerHTML={ {__html: title} }></a></td><td>{location}</td><td><a className={classes} href={link}>Sign up</a></td></tr>
         )
     }
 
@@ -67,12 +68,14 @@ Concerts
                 (data) => {
                     console.log(data);
                     setConcerts(data);
+                    twemoji.parse(document.body, { base: "/static/twemoji/", size: 72, ext: '.svg', folder: 'svg' });
                 }
             );
             $.get("/api/myconcert/").done(
                 (data) => {
                     console.log(data);
                     setMyConcerts(data);
+                    twemoji.parse(document.body, { base: "/static/twemoji/", size: 72, ext: '.svg', folder: 'svg' });
                 }
             );
         }, []);
@@ -82,12 +85,14 @@ Concerts
                     (data) => {
                         console.log(data);
                         setConcerts(data);
+                        twemoji.parse(document.body, { base: "/static/twemoji/", size: 72, ext: '.svg', folder: 'svg' });
                     }
                 );
                 $.get("/api/myconcert/").done(
                     (data) => {
                         console.log(data);
                         setMyConcerts(data);
+                        twemoji.parse(document.body, { base: "/static/twemoji/", size: 72, ext: '.svg', folder: 'svg' });
                     }
                 );
             }, 25000);
