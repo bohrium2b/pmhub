@@ -6,3 +6,4 @@
 /signup/static/*
 .gitGraph/*
 .python-version
+server.log
