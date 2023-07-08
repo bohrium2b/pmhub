@@ -14,8 +14,12 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from .models import Concert, Performance
+from bleach import clean
+import logging
 
+logger = logging.getLogger(__name__)
 
+allowed_tags: list[str] = ["p", "b", "strong", "em", "i", "u", "h2", "h3", "h4", "code", "a", "ul", "ol", "li"]
 # Create your views here.
 def index(request):
     """
@@ -28,9 +32,9 @@ def index(request):
     except Exception:
         return redirect("settz")
     concerts = Concert.objects.filter(dateandtime__gte=timezone.now()).order_by("dateandtime")
-    print(request.user.groups.filter(name="event-manager").exists())
-    print(concerts)
-    print(bool(concerts))
+    logger.info(request.user.groups.filter(name="event-manager").exists())
+    logger.info(concerts)
+    logger.info(bool(concerts))
     return render(
         request,
         "signup/index.html",
@@ -100,10 +104,11 @@ def createconcert(request):
             raise PermissionDenied()
         eventmanager = request.user
         dateandtimeraw: str = request.POST.get("datetime")
-        print(dateandtimeraw)
+        logger.info(dateandtimeraw)
         location = request.POST.get("location")
         maxduration = request.POST.get("maxtime")
         description: str | None = request.POST.get("description")
+        description = clean(description, allowed_tags) if description else None
         piano = bool(request.POST.get("piano"))
         signuplink: str | None = request.POST.get("signuplink")
         title: str | None = request.POST.get("title")
@@ -114,8 +119,6 @@ def createconcert(request):
         dateandtime: datetime = datetime.fromisoformat(dateandtimeraw)
         dateandtime = timez.localize(dateandtime)
         # dateandtime = dateandtime.replace(tzinfo=timez)
-        print(dateandtime.tzinfo)
-        print(dateandtime)
         newconcert = Concert(
             title=title,
             location=location,
@@ -179,19 +182,20 @@ def newperformance(request, concert_id):
             },
         )
     if request.method == "POST":
-        # print(request.POST)
+        # logger.info(request.POST)
         performers_raw = request.POST.getlist("performers")
-        #print(type(performers_raw))
-        #print("Performers " + str(performers_raw))
+        #logger.info(type(performers_raw))
+        #logger.info("Performers " + str(performers_raw))
         performers = []
         for performer in performers_raw:
-            print(performer)
+            logger.info(performer)
             performers.append(User.objects.get(id=performer))
         piece = request.POST.get("piece")
         composer = request.POST.get("composer")
         arranger = request.POST.get("arranger")
         duration = request.POST.get("duration")
         comment = request.POST.get("comment")
+        comment: str | None = clean(comment, allowed_tags) if comment else None
         # Whatif some fields are missing?
         if not duration or not composer or not piece or not performers:
             messages.error(
@@ -239,8 +243,6 @@ def concertpage(request, concert_id):
     if concert.dateandtime < timezone.now():
         concert.locked = True
         concert.save()
-    print(concert.dateandtime.tzinfo)
-    print(concert.dateandtime)
     useriseventmanager = False
     if request.user.groups.filter(name="event-manager").exists():
         useriseventmanager = True
@@ -282,6 +284,7 @@ def editconcert(request, concert_id):
     location = request.POST.get("location")
     maxduration = request.POST.get("maxtime")
     description = request.POST.get("description")
+    description: str | None = clean(description, allowed_tags) if description else None
     piano = bool(request.POST.get("piano"))
     signuplink = request.POST.get("signuplink")
     title = request.POST.get("title")
@@ -383,7 +386,7 @@ def concertjson(request):
         return redirect("settz")
     loggedin = bool(request.user)
     # get start and end dates
-    print(type(request.GET.get("start")))
+    logger.info(type(request.GET.get("start")))
     start = request.GET.get("start")
     end = request.GET.get("end")
     if start and end:
@@ -400,7 +403,7 @@ def concertjson(request):
     concerts = []
     for concert in concerts_temp:
         end = concert.dateandtime + timedelta(minutes=concert.maxtime)
-        print(end)
+        logger.info(end)
         concerts.append({"concert": concert, "end": end})
     return render(
         request,
@@ -448,7 +451,6 @@ def editperformance(request, concert_id, performance_id):
     if request.method == "GET":
         performers = User.objects.all().order_by("last_name").values()
         performanceperformers = performance.performer.all().values_list("id", flat=True)
-        print(performance.performer.all())
         return render(
             request,
             "signup/editperformance.html",
@@ -464,15 +466,16 @@ def editperformance(request, concert_id, performance_id):
     performers_raw = request.POST.getlist("performers")
     performers = []
     for performer in performers_raw:
-        print(performer)
+        logger.info(performer)
         performers.append(User.objects.get(id=performer))
     piece = request.POST.get("piece")
     composer = request.POST.get("composer")
     arranger = request.POST.get("arranger")
     duration = request.POST.get("duration")
     comment = request.POST.get("comment")
+    comment: str | None = clean(comment, allowed_tags) if comment else None
     if not duration or not composer or not piece or not performers:
-        print(f"{composer} {duration} {piece} {performers}")
+        logger.info(f"{composer} {duration} {piece} {performers}")
         return HttpResponse("Please Fill Out All Required Fields")
     if int(duration) + totaltimes >= concert.maxtime + 10 and not iseventmanager:
         # deny
@@ -485,7 +488,7 @@ def editperformance(request, concert_id, performance_id):
     performance.duration = int(duration)
     performance.comment = comment
     performance.performer.set(performers)
-    print(comment)
+    logger.info(comment)
     performance.save()
     if iseventmanager and int(duration) + totaltimes >= concert.maxtime:
         concert.locked = True
