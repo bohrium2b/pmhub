@@ -21,12 +21,12 @@ class PerformanceViewSet(viewsets.ModelViewSet):
 
 
 def UserConcerts(request) -> JsonResponse | None:
-    print(request.user)
+    logger.info(request.user)
     concert_ids = Performance.objects.filter(performer__in = [request.user]).values('concert')
-    print(f"Concert ids: {concert_ids}")
+    logger.info(f"Concert ids: {concert_ids}")
     queryset: BaseManager[Concert] = Concert.objects.filter(id__in=concert_ids)
-    print(queryset)
+    logger.info(queryset)
     if request.method == "GET":
         serialized = ConcertSerializer(queryset, many=True)
-        print(serialized)
+        logger.info(serialized)
         return JsonResponse(serialized.data, safe=False)
